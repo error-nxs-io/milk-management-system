@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🥛 Milk Management System</title>
+  <style>
+    /* ============ GLOBAL STYLES ============ */
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #818cf8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --sidebar-bg: #1e293b;
+      --sidebar-text: #cbd5e1;
+      --sidebar-active: #4f46e5;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+    /* ============ SIDEBAR ============ */
+    .sidebar {
+      width: 260px;
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+    }
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sidebar-header .logo { font-size: 32px; }
+    .sidebar-header h2 { font-size: 18px; color: #fff; font-weight: 700; }
+    .sidebar-header small { font-size: 11px; color: var(--sidebar-text); display: block; }
+    .sidebar nav { padding: 12px 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 24px; color: var(--sidebar-text);
+      cursor: pointer; transition: all 0.2s;
+      border-left: 3px solid transparent; font-size: 14px;
+      text-decoration: none;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .nav-item.active { background: rgba(79,70,229,0.2); color: #fff; border-left-color: var(--sidebar-active); }
+    .nav-item .icon { font-size: 20px; width: 24px; text-align: center; }
+    .nav-section { padding: 16px 24px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.3); }
+    /* ============ MAIN CONTENT ============ */
+    .main-content { margin-left: 260px; flex: 1; min-height: 100vh; }
+    .top-bar {
+      background: var(--card-bg); padding: 16px 32px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+    }
+    .top-bar h1 { font-size: 22px; font-weight: 700; }
+    .top-bar .date-display { font-size: 14px; color: var(--text-light); }
+    .content-area { padding: 32px; }
+    /* ============ CARDS ============ */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 32px; }
+    .stat-card {
+      background: var(--card-bg); border-radius: var(--radius); padding: 24px;
+      box-shadow: var(--shadow); display: flex; align-items: center; gap: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .stat-card .stat-icon { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .stat-card .stat-icon.blue { background: #dbeafe; }
+    .stat-card .stat-icon.green { background: #d1fae5; }
+    .stat-card .stat-icon.yellow { background: #fef3c7; }
+    .stat-card .stat-icon.purple { background: #ede9fe; }
+    .stat-card .stat-icon.red { background: #fee2e2; }
+    .stat-card .stat-info h3 { font-size: 26px; font-weight: 700; }
+    .stat-card .stat-info p { font-size: 13px; color: var(--text-light); margin-top: 2px; }
+    /* ============ PANELS / TABLES ============ */
+    .panel { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 24px; overflow: hidden; animation: fadeIn 0.3s ease; }
+    .panel-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .panel-header h2 { font-size: 17px; font-weight: 600; }
+    .panel-body { padding: 24px; }
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    table th, table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+    table th { background: #f8fafc; font-weight: 600; color: var(--text-light); text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
+    table tr:hover { background: #f8fafc; }
+    table tr:last-child td { border-bottom: none; }
+    /* ============ BUTTONS ============ */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: #f8fafc; }
+    /* ============ FORMS ============ */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
+      font-size: 14px; color: var(--text); transition: border-color 0.2s, box-shadow 0.2s; background: #fff;
+    }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+    /* ============ MODAL ============ */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-lg); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { font-size: 18px; font-weight: 600; }
+    .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); padding: 4px; line-height: 1; }
+    .modal-body { padding: 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+    /* ============ BADGES ============ */
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+    /* ============ TOAST ============ */
+    .toast { position: fixed; top: 20px; right: 20px; padding: 14px 24px; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 500; z-index: 9999; transform: translateX(120%); transition: transform 0.3s ease; box-shadow: var(--shadow-lg); }
+    .toast.show { transform: translateX(0); }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: var(--info); }
+    /* ============ CHART ============ */
+    .chart-container { width: 100%; height: 300px; position: relative; overflow-x: auto; }
+    .chart-bar { position: absolute; bottom: 30px; width: 40px; border-radius: 4px 4px 0 0; transition: height 0.5s ease; opacity: 0.85; }
+    .chart-bar.collected { background: var(--primary); }
+    .chart-bar.delivered { background: var(--success); }
+    .chart-label { position: absolute; bottom: 8px; font-size: 11px; color: var(--text-light); text-align: center; width: 60px; transform: translateX(-10px); }
+    .chart-legend { display: flex; gap: 20px; justify-content: center; margin-top: 8px; }
+    .chart-legend span { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-light); }
+    .chart-legend .dot { width: 12px; height: 12px; border-radius: 50%; }
+    /* ============ EMPTY STATE ============ */
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-light); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+    .empty-state p { font-size: 14px; margin-bottom: 20px; }
+    /* ============ PAGE SECTIONS ============ */
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+    /* ============ FILTER BAR ============ */
+    .filter-bar { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 20px; }
+    .filter-bar .form-group { margin-bottom: 0; min-width: 160px; }
+    /* ============ MOBILE ============ */
+    .mobile-toggle { display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text); }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .mobile-toggle { display: block; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .content-area { padding: 16px; }
+    }
+    @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="logo">🥛</span>
+      <div><h2>Milk Manager</h2><small>Dairy Management System</small></div>
+    </div>
+    <nav>
+      <div class="nav-section">Menu</div>
+      <a class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard"><span class="icon">📊</span> Dashboard</a>
+      <a class="nav-item" onclick="showPage('suppliers')" data-page="suppliers"><span class="icon">🚜</span> Suppliers (Dealers)</a>
+      <a class="nav-item" onclick="showPage('customers')" data-page="customers"><span class="icon">👥</span> Customers</a>
+      <div class="nav-section">Operations</div>
+      <a class="nav-item" onclick="showPage('collections')" data-page="collections"><span class="icon">📥</span> Milk Collection</a>
+      <a class="nav-item" onclick="showPage('deliveries')" data-page="deliveries"><span class="icon">🚚</span> Milk Delivery</a>
+      <div class="nav-section">Finance</div>
+      <a class="nav-item" onclick="showPage('payments')" data-page="payments"><span class="icon">💰</span> Payments</a>
+      <a class="nav-item" onclick="showPage('reports')" data-page="reports"><span class="icon">📈</span> Reports</a>
+      <div class="nav-section">Data</div>
+      <a class="nav-item" onclick="exportData()"><span class="icon">📤</span> Export Data</a>
+      <a class="nav-item" onclick="document.getElementById('importFile').click()"><span class="icon">📥</span> Import Data</a>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="top-bar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+        <h1 id="pageTitle">Dashboard</h1>
+      </div>
+      <span class="date-display" id="dateDisplay"></span>
+    </div>
+    <div class="content-area">
+
+      <!-- DASHBOARD -->
+      <div class="page-section active" id="page-dashboard">
+        <div class="stats-grid" id="dashboardStats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;" id="dashboardGrid">
+          <div class="panel"><div class="panel-header"><h2>📥 Today's Collections</h2></div><div class="panel-body" id="todayCollectionsTable"></div></div>
+          <div class="panel"><div class="panel-header"><h2>🚚 Today's Deliveries</h2></div><div class="panel-body" id="todayDeliveriesTable"></div></div>
+        </div>
+      </div>
+
+      <!-- SUPPLIERS -->
+      <div class="page-section" id="page-suppliers">
+        <div class="panel">
+          <div class="panel-header"><h2>🚜 All Suppliers / Dealers</h2><button class="btn btn-primary" onclick="openModal('supplierModal')">+ Add Supplier</button></div>
+          <div class="panel-body"><div class="table-container" id="suppliersTable"></div></div>
+        </div>
+      </div>
+
+      <!-- CUSTOMERS -->
+      <div class="page-section" id="page-customers">
+        <div class="panel">
+          <div class="panel-header"><h2>👥 All Customers</h2><button class="btn btn-primary" onclick="openModal('customerModal')">+ Add Customer</button></div>
+          <div class="panel-body"><div class="table-container" id="customersTable"></div></div>
+        </div>
+      </div>
+
+      <!-- COLLECTIONS -->
+      <div class="page-section" id="page-collections">
+        <div class="panel">
+          <div class="panel-header"><h2>📥 Milk Collection Records</h2><button class="btn btn-primary" onclick="openModal('collectionModal')">+ Add Collection</button></div>
+          <div class="panel-body">
+            <div class="filter-bar">
+              <div class="form-group"><label>From Date</label><input type="date" id="filterColFrom" onchange="loadCollections()"></div>
+              <div class="form-group"><label>To Date</label><input type="date" id="filterColTo" onchange="loadCollections()"></div>
+              <div class="form-group"><label>Supplier</label><select id="filterColSupplier" onchange="loadCollections()"><option value="">All Suppliers</option></select></div>
+            </div>
+            <div class="table-container" id="collectionsTable"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DELIVERIES -->
+      <div class="page-section" id="page-deliveries">
+        <div class="panel">
+          <div class="panel-header"><h2>🚚 Milk Delivery Records</h2><button class="btn btn-primary" onclick="openModal('deliveryModal')">+ Add Delivery</button></div>
+          <div class="panel-body">
+            <div class="filter-bar">
+              <div class="form-group"><label>From Date</label><input type="date" id="filterDelFrom" onchange="loadDeliveries()"></div>
+              <div class="form-group"><label>To Date</label><input type="date" id="filterDelTo" onchange="loadDeliveries()"></div>
+              <div class="form-group"><label>Customer</label><select id="filterDelCustomer" onchange="loadDeliveries()"><option value="">All Customers</option></select></div>
+            </div>
+            <div class="table-container" id="deliveriesTable"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAYMENTS -->
+      <div class="page-section" id="page-payments">
+        <div class="panel">
+          <div class="panel-header"><h2>💰 Payment Records</h2><button class="btn btn-primary" onclick="openModal('paymentModal')">+ Add Payment</button></div>
+          <div class="panel-body"><div class="table-container" id="paymentsTable"></div></div>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="page-section" id="page-reports">
+        <div class="panel">
+          <div class="panel-header"><h2>📈 Monthly Reports</h2></div>
+          <div class="panel-body">
+            <div class="chart-container" id="chartArea"></div>
+            <div class="chart-legend" style="margin-top:16px;">
+              <span><span class="dot" style="background:var(--primary)"></span> Collected (L)</span>
+              <span><span class="dot" style="background:var(--success)"></span> Delivered (L)</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:24px;">
+          <div class="panel-header"><h2>📋 Monthly Summary</h2></div>
+          <div class="panel-body"><div class="table-container" id="reportsTable"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="supplierModal"><div class="modal"><div class="modal-header"><h2>Add Supplier</h2><button class="modal-close" onclick="closeModal('supplierModal')">&times;</button></div><div class="modal-body"><form id="supplierForm" onsubmit="saveSupplier(event)"><div class="form-grid"><div class="form-group"><label>Full Name *</label><input type="text" name="name" required placeholder="e.g. Ramesh Kumar"></div><div class="form-group"><label>Phone Number</label><input type="tel" name="phone" placeholder="e.g. 9876543210"></div><div class="form-group"><label>Village / Area</label><input type="text" name="area" placeholder="e.g. Dudu, Jaipur"></div><div class="form-group"><label>Milk Type</label><select name="milkType"><option value="cow">Cow (गाय)</option><option value="buffalo">Buffalo (भैंस)</option><option value="mixed">Mixed (मिक्स)</option></select></div><div class="form-group"><label>Rate per Litre (₹)</label><input type="number" name="rate" step="0.5" placeholder="e.g. 45"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal('supplierModal')">Cancel</button><button type="submit" class="btn btn-primary">Save Supplier</button></div></form></div></div></div>
+
+  <div class="modal-overlay" id="customerModal"><div class="modal"><div class="modal-header"><h2>Add Customer</h2><button class="modal-close" onclick="closeModal('customerModal')">&times;</button></div><div class="modal-body"><form id="customerForm" onsubmit="saveCustomer(event)"><div class="form-grid"><div class="form-group"><label>Full Name *</label><input type="text" name="name" required placeholder="e.g. Suresh Sharma"></div><div class="form-group"><label>Phone Number</label><input type="tel" name="phone" placeholder="e.g. 9876543210"></div><div class="form-group"><label>Address / Area</label><input type="text" name="area" placeholder="e.g. Mansarovar, Jaipur"></div><div class="form-group"><label>Daily Quantity (Litre)</label><input type="number" name="dailyQty" step="0.5" placeholder="e.g. 2"></div><div class="form-group"><label>Rate per Litre (₹)</label><input type="number" name="rate" step="0.5" placeholder="e.g. 55"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal('customerModal')">Cancel</button><button type="submit" class="btn btn-primary">Save Customer</button></div></form></div></div></div>
+
+  <div class="modal-overlay" id="collectionModal"><div class="modal"><div class="modal-header"><h2>Add Milk Collection</h2><button class="modal-close" onclick="closeModal('collectionModal')">&times;</button></div><div class="modal-body"><form id="collectionForm" onsubmit="saveCollection(event)"><div class="form-grid"><div class="form-group"><label>Supplier *</label><select name="supplierId" required id="colSupplierSelect"><option value="">-- Select Supplier --</option></select></div><div class="form-group"><label>Date *</label><input type="date" name="date" required></div><div class="form-group"><label>Shift</label><select name="shift"><option value="morning">Morning (सुबह)</option><option value="evening">Evening (शाम)</option></select></div><div class="form-group"><label>Quantity (Litre) *</label><input type="number" name="quantity" step="0.1" required placeholder="e.g. 15.5"></div><div class="form-group"><label>Fat %</label><input type="number" name="fat" step="0.1" placeholder="e.g. 4.5"></div><div class="form-group"><label>Rate (₹/Litre)</label><input type="number" name="rate" step="0.5" placeholder="e.g. 45"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button type="submit" class="btn btn-primary">Save Collection</button></div></form></div></div></div>
+
+  <div class="modal-overlay" id="deliveryModal"><div class="modal"><div class="modal-header"><h2>Add Milk Delivery</h2><button class="modal-close" onclick="closeModal('deliveryModal')">&times;</button></div><div class="modal-body"><form id="deliveryForm" onsubmit="saveDelivery(event)"><div class="form-grid"><div class="form-group"><label>Customer *</label><select name="customerId" required id="delCustomerSelect"><option value="">-- Select Customer --</option></select></div><div class="form-group"><label>Date *</label><input type="date" name="date" required></div><div class="form-group"><label>Shift</label><select name="shift"><option value="morning">Morning (सुबह)</option><option value="evening">Evening (शाम)</option></select></div><div class="form-group"><label>Quantity (Litre) *</label><input type="number" name="quantity" step="0.1" required placeholder="e.g. 5"></div><div class="form-group"><label>Rate (₹/Litre)</label><input type="number" name="rate" step="0.5" placeholder="e.g. 55"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal('deliveryModal')">Cancel</button><button type="submit" class="btn btn-primary">Save Delivery</button></div></form></div></div></div>
+
+  <div class="modal-overlay" id="paymentModal"><div class="modal"><div class="modal-header"><h2>Add Payment</h2><button class="modal-close" onclick="closeModal('paymentModal')">&times;</button></div><div class="modal-body"><form id="paymentForm" onsubmit="savePayment(event)"><div class="form-grid"><div class="form-group"><label>Type *</label><select name="type" required id="payTypeSelect" onchange="updatePayPersonSelect()"><option value="">-- Select --</option><option value="supplier">Payment to Supplier</option><option value="customer">Payment from Customer</option></select></div><div class="form-group"><label>Person *</label><select name="personId" required id="payPersonSelect"><option value="">-- Select Type first --</option></select></div><div class="form-group"><label>Date *</label><input type="date" name="date" required></div><div class="form-group"><label>Amount (₹) *</label><input type="number" name="amount" step="1" required placeholder="e.g. 5000"></div><div class="form-group"><label>Payment Mode</label><select name="mode"><option value="cash">Cash (नकद)</option><option value="upi">UPI</option><option value="bank">Bank Transfer</option><option value="other">Other</option></select></div><div class="form-group"><label>Note</label><input type="text" name="note" placeholder="e.g. June month payment"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal('paymentModal')">Cancel</button><button type="submit" class="btn btn-primary">Save Payment</button></div></form></div></div></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ============== LOCAL STORAGE DATABASE ==============
+    const DB = {
+      get(key) { return JSON.parse(localStorage.getItem('mms_' + key) || '[]'); },
+      set(key, data) { localStorage.setItem('mms_' + key, JSON.stringify(data)); },
+      genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+    };
+
+    // ============== TOAST ==============
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast ${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ============== NAVIGATION ==============
+    function showPage(page) {
+      document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(`page-${page}`).classList.add('active');
+      document.querySelector(`[data-page="${page}"]`).classList.add('active');
+      const titles = { dashboard:'📊 Dashboard', suppliers:'🚜 Suppliers / Dealers', customers:'👥 Customers', collections:'📥 Milk Collection', deliveries:'🚚 Milk Delivery', payments:'💰 Payments', reports:'📈 Reports' };
+      document.getElementById('pageTitle').textContent = titles[page] || page;
+      switch(page) {
+        case 'dashboard': loadDashboard(); break;
+        case 'suppliers': loadSuppliers(); break;
+        case 'customers': loadCustomers(); break;
+        case 'collections': loadCollections(); loadSupplierFilters(); break;
+        case 'deliveries': loadDeliveries(); loadCustomerFilters(); break;
+        case 'payments': loadPayments(); break;
+        case 'reports': loadReports(); break;
+      }
+      document.getElementById('sidebar').classList.remove('open');
+    }
+
+    // ============== MODALS ==============
+    function openModal(id) {
+      document.getElementById(id).classList.add('show');
+      const dateInput = document.querySelector(`#${id} input[type="date"]`);
+      if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+      if (id === 'collectionModal') loadSupplierSelect();
+      if (id === 'deliveryModal') loadCustomerSelect();
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+      const form = document.querySelector(`#${id} form`);
+      if (form) form.reset();
+    }
+    document.querySelectorAll('.modal-overlay').forEach(o => {
+      o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); });
+    });
+
+    // ============== HELPERS ==============
+    function getSuppliers() { return DB.get('suppliers'); }
+    function getCustomers() { return DB.get('customers'); }
+    function getCollections() { return DB.get('collections'); }
+    function getDeliveries() { return DB.get('deliveries'); }
+    function getPayments() { return DB.get('payments'); }
+
+    function supplierMap() { const m = {}; getSuppliers().forEach(s => m[s.id] = s.name); return m; }
+    function customerMap() { const m = {}; getCustomers().forEach(c => m[c.id] = c.name); return m; }
+
+    // ============== DASHBOARD ==============
+    function loadDashboard() {
+      const suppliers = getSuppliers(), customers = getCustomers();
+      const collections = getCollections(), deliveries = getDeliveries(), payments = getPayments();
+      const today = new Date().toISOString().split('T')[0];
+      const todayCol = collections.filter(c => c.date === today);
+      const todayDel = deliveries.filter(d => d.date === today);
+      const totalCol = collections.reduce((s, c) => s + (parseFloat(c.quantity) || 0), 0);
+      const totalDel = deliveries.reduce((s, d) => s + (parseFloat(d.quantity) || 0), 0);
+      const totalPay = payments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+
+      document.getElementById('dashboardStats').innerHTML = `
+        <div class="stat-card"><div class="stat-icon blue">🚜</div><div class="stat-info"><h3>${suppliers.length}</h3><p>Total Suppliers</p></div></div>
+        <div class="stat-card"><div class="stat-icon purple">👥</div><div class="stat-info"><h3>${customers.length}</h3><p>Total Customers</p></div></div>
+        <div class="stat-card"><div class="stat-icon green">📥</div><div class="stat-info"><h3>${todayCol.reduce((s,c)=>s+(parseFloat(c.quantity)||0),0).toFixed(1)} L</h3><p>Today's Collection (${todayCol.length})</p></div></div>
+        <div class="stat-card"><div class="stat-icon yellow">🚚</div><div class="stat-info"><h3>${todayDel.reduce((s,d)=>s+(parseFloat(d.quantity)||0),0).toFixed(1)} L</h3><p>Today's Delivery (${todayDel.length})</p></div></div>
+        <div class="stat-card"><div class="stat-icon blue">📊</div><div class="stat-info"><h3>${totalCol.toFixed(1)} L</h3><p>Total Collected</p></div></div>
+        <div class="stat-card"><div class="stat-icon green">📦</div><div class="stat-info"><h3>${totalDel.toFixed(1)} L</h3><p>Total Delivered</p></div></div>
+        <div class="stat-card"><div class="stat-icon red">💰</div><div class="stat-info"><h3>₹${totalPay.toFixed(0)}</h3><p>Total Payments</p></div></div>
+      `;
+
+      const sm = supplierMap(), cm = customerMap();
+      document.getElementById('todayCollectionsTable').innerHTML = todayCol.length === 0
+        ? '<div class="empty-state"><p>No collections today</p></div>'
+        : '<table><thead><tr><th>Supplier</th><th>Shift</th><th>Qty</th><th>Fat</th></tr></thead><tbody>' + todayCol.map(c => `<tr><td>${sm[c.supplierId]||'?'}</td><td>${c.shift||'-'}</td><td>${c.quantity}L</td><td>${c.fat||'-'}%</td></tr>`).join('') + '</tbody></table>';
+
+      document.getElementById('todayDeliveriesTable').innerHTML = todayDel.length === 0
+        ? '<div class="empty-state"><p>No deliveries today</p></div>'
+        : '<table><thead><tr><th>Customer</th><th>Shift</th><th>Qty</th><th>Amt</th></tr></thead><tbody>' + todayDel.map(d => `<tr><td>${cm[d.customerId]||'?'}</td><td>${d.shift||'-'}</td><td>${d.quantity}L</td><td>₹${d.rate?(parseFloat(d.quantity)*parseFloat(d.rate)).toFixed(0):'-'}</td></tr>`).join('') + '</tbody></table>';
+    }
+
+    // ============== SUPPLIERS ==============
+    function loadSuppliers() {
+      const data = getSuppliers();
+      if (!data.length) { document.getElementById('suppliersTable').innerHTML = '<div class="empty-state"><div class="icon">🚜</div><h3>No Suppliers Yet</h3><p>Add your first milk supplier</p><button class="btn btn-primary" onclick="openModal(\'supplierModal\')">+ Add Supplier</button></div>'; return; }
+      let h = '<table><thead><tr><th>Name</th><th>Phone</th><th>Area</th><th>Type</th><th>Rate</th><th>Actions</th></tr></thead><tbody>';
+      data.forEach(s => {
+        const tb = s.milkType==='cow'?'badge-success':s.milkType==='buffalo'?'badge-warning':'badge-info';
+        h += `<tr><td><strong>${s.name}</strong></td><td>${s.phone||'-'}</td><td>${s.area||'-'}</td><td><span class="badge ${tb}">${(s.milkType||'cow').toUpperCase()}</span></td><td>₹${s.rate||'-'}/L</td><td><button class="btn btn-danger btn-sm" onclick="deleteSupplier('${s.id}')">🗑</button></td></tr>`;
+      });
+      document.getElementById('suppliersTable').innerHTML = h + '</tbody></table>';
+    }
+    function saveSupplier(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const list = getSuppliers(); list.push({ id: DB.genId(), ...data, createdAt: new Date().toISOString() }); DB.set('suppliers', list);
+      closeModal('supplierModal'); e.target.reset(); showToast('✅ Supplier added!'); loadSuppliers();
+    }
+    function deleteSupplier(id) {
+      if (!confirm('Delete this supplier?')) return;
+      DB.set('suppliers', getSuppliers().filter(s => s.id !== id)); showToast('🗑 Deleted','info'); loadSuppliers();
+    }
+
+    // ============== CUSTOMERS ==============
+    function loadCustomers() {
+      const data = getCustomers();
+      if (!data.length) { document.getElementById('customersTable').innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>No Customers Yet</h3><p>Add your first customer</p><button class="btn btn-primary" onclick="openModal(\'customerModal\')">+ Add Customer</button></div>'; return; }
+      let h = '<table><thead><tr><th>Name</th><th>Phone</th><th>Area</th><th>Daily Qty</th><th>Rate</th><th>Actions</th></tr></thead><tbody>';
+      data.forEach(c => {
+        h += `<tr><td><strong>${c.name}</strong></td><td>${c.phone||'-'}</td><td>${c.area||'-'}</td><td>${c.dailyQty||'-'}L</td><td>₹${c.rate||'-'}/L</td><td><button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')">🗑</button></td></tr>`;
+      });
+      document.getElementById('customersTable').innerHTML = h + '</tbody></table>';
+    }
+    function saveCustomer(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const list = getCustomers(); list.push({ id: DB.genId(), ...data, createdAt: new Date().toISOString() }); DB.set('customers', list);
+      closeModal('customerModal'); e.target.reset(); showToast('✅ Customer added!'); loadCustomers();
+    }
+    function deleteCustomer(id) {
+      if (!confirm('Delete this customer?')) return;
+      DB.set('customers', getCustomers().filter(c => c.id !== id)); showToast('🗑 Deleted','info'); loadCustomers();
+    }
+
+    // ============== COLLECTIONS ==============
+    function loadSupplierFilters() {
+      const opts = getSuppliers().map(s => `<option value="${s.id}">${s.name} (${s.area||''})</option>`).join('');
+      document.getElementById('filterColSupplier').innerHTML = '<option value="">All Suppliers</option>' + opts;
+    }
+    function loadSupplierSelect() {
+      const opts = getSuppliers().map(s => `<option value="${s.id}" data-rate="${s.rate||''}">${s.name} - ${s.milkType||'cow'} (₹${s.rate||'-'}/L)</option>`).join('');
+      document.getElementById('colSupplierSelect').innerHTML = '<option value="">-- Select --</option>' + opts;
+      document.getElementById('colSupplierSelect').onchange = function() {
+        const r = this.options[this.selectedIndex].dataset.rate;
+        if (r) document.querySelector('#collectionForm input[name="rate"]').value = r;
+      };
+    }
+    function loadCollections() {
+      const from = document.getElementById('filterColFrom').value;
+      const to = document.getElementById('filterColTo').value;
+      const sid = document.getElementById('filterColSupplier').value;
+      let data = getCollections();
+      if (from) data = data.filter(c => c.date >= from);
+      if (to) data = data.filter(c => c.date <= to);
+      if (sid) data = data.filter(c => c.supplierId === sid);
+      data.sort((a,b) => b.date.localeCompare(a.date));
+      const sm = supplierMap();
+      if (!data.length) { document.getElementById('collectionsTable').innerHTML = '<div class="empty-state"><div class="icon">📥</div><h3>No Collections Found</h3></div>'; return; }
+      let h = '<table><thead><tr><th>Date</th><th>Supplier</th><th>Shift</th><th>Qty</th><th>Fat</th><th>Rate</th><th>Total</th><th>Actions</th></tr></thead><tbody>';
+      data.forEach(c => {
+        const t = c.rate ? (parseFloat(c.quantity)*parseFloat(c.rate)).toFixed(0) : '-';
+        h += `<tr><td>${c.date}</td><td><strong>${sm[c.supplierId]||'?'}</strong></td><td><span class="badge ${c.shift==='morning'?'badge-warning':'badge-info'}">${c.shift||'-'}</span></td><td>${c.quantity}L</td><td>${c.fat||'-'}%</td><td>₹${c.rate||'-'}</td><td><strong>₹${t}</strong></td><td><button class="btn btn-danger btn-sm" onclick="deleteCollection('${c.id}')">🗑</button></td></tr>`;
+      });
+      document.getElementById('collectionsTable').innerHTML = h + '</tbody></table>';
+    }
+    function saveCollection(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const list = getCollections(); list.push({ id: DB.genId(), ...data, createdAt: new Date().toISOString() }); DB.set('collections', list);
+      closeModal('collectionModal'); e.target.reset(); showToast('✅ Collection recorded!'); loadCollections();
+    }
+    function deleteCollection(id) {
+      if (!confirm('Delete?')) return;
+      DB.set('collections', getCollections().filter(c => c.id !== id)); showToast('🗑 Deleted','info'); loadCollections();
+    }
+
+    // ============== DELIVERIES ==============
+    function loadCustomerFilters() {
+      const opts = getCustomers().map(c => `<option value="${c.id}">${c.name} (${c.area||''})</option>`).join('');
+      document.getElementById('filterDelCustomer').innerHTML = '<option value="">All Customers</option>' + opts;
+    }
+    function loadCustomerSelect() {
+      const opts = getCustomers().map(c => `<option value="${c.id}" data-rate="${c.rate||''}">${c.name} - ${c.area||''} (₹${c.rate||'-'}/L)</option>`).join('');
+      document.getElementById('delCustomerSelect').innerHTML = '<option value="">-- Select --</option>' + opts;
+      document.getElementById('delCustomerSelect').onchange = function() {
+        const r = this.options[this.selectedIndex].dataset.rate;
+        if (r) document.querySelector('#deliveryForm input[name="rate"]').value = r;
+      };
+    }
+    function loadDeliveries() {
+      const from = document.getElementById('filterDelFrom').value;
+      const to = document.getElementById('filterDelTo').value;
+      const cid = document.getElementById('filterDelCustomer').value;
+      let data = getDeliveries();
+      if (from) data = data.filter(d => d.date >= from);
+      if (to) data = data.filter(d => d.date <= to);
+      if (cid) data = data.filter(d => d.customerId === cid);
+      data.sort((a,b) => b.date.localeCompare(a.date));
+      const cm = customerMap();
+      if (!data.length) { document.getElementById('deliveriesTable').innerHTML = '<div class="empty-state"><div class="icon">🚚</div><h3>No Deliveries Found</h3></div>'; return; }
+      let h = '<table><thead><tr><th>Date</th><th>Customer</th><th>Shift</th><th>Qty</th><th>Rate</th><th>Total</th><th>Actions</th></tr></thead><tbody>';
+      data.forEach(d => {
+        const t = d.rate ? (parseFloat(d.quantity)*parseFloat(d.rate)).toFixed(0) : '-';
+        h += `<tr><td>${d.date}</td><td><strong>${cm[d.customerId]||'?'}</strong></td><td><span class="badge ${d.shift==='morning'?'badge-warning':'badge-info'}">${d.shift||'-'}</span></td><td>${d.quantity}L</td><td>₹${d.rate||'-'}</td><td><strong>₹${t}</strong></td><td><button class="btn btn-danger btn-sm" onclick="deleteDelivery('${d.id}')">🗑</button></td></tr>`;
+      });
+      document.getElementById('deliveriesTable').innerHTML = h + '</tbody></table>';
+    }
+    function saveDelivery(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const list = getDeliveries(); list.push({ id: DB.genId(), ...data, createdAt: new Date().toISOString() }); DB.set('deliveries', list);
+      closeModal('deliveryModal'); e.target.reset(); showToast('✅ Delivery recorded!'); loadDeliveries();
+    }
+    function deleteDelivery(id) {
+      if (!confirm('Delete?')) return;
+      DB.set('deliveries', getDeliveries().filter(d => d.id !== id)); showToast('🗑 Deleted','info'); loadDeliveries();
+    }
+
+    // ============== PAYMENTS ==============
+    function updatePayPersonSelect() {
+      const type = document.getElementById('payTypeSelect').value;
+      const sel = document.getElementById('payPersonSelect');
+      if (!type) { sel.innerHTML = '<option value="">-- Select Type first --</option>'; return; }
+      const data = type === 'supplier' ? getSuppliers() : getCustomers();
+      sel.innerHTML = `<option value="">-- Select ${type} --</option>` + data.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
+    function loadPayments() {
+      const data = getPayments();
+      const sm = supplierMap(), cm = customerMap();
+      const pm = {...sm, ...cm};
+      if (!data.length) { document.getElementById('paymentsTable').innerHTML = '<div class="empty-state"><div class="icon">💰</div><h3>No Payments Yet</h3></div>'; return; }
+      let h = '<table><thead><tr><th>Date</th><th>Type</th><th>Person</th><th>Amount</th><th>Mode</th><th>Note</th><th>Actions</th></tr></thead><tbody>';
+      data.sort((a,b) => b.date.localeCompare(a.date)).forEach(p => {
+        const tb = p.type==='supplier'?'badge-danger':'badge-success';
+        const tl = p.type==='supplier'?'Paid':'Received';
+        h += `<tr><td>${p.date}</td><td><span class="badge ${tb}">${tl}</span></td><td><strong>${pm[p.personId]||'?'}</strong></td><td><strong>₹${p.amount}</strong></td><td>${p.mode||'cash'}</td><td>${p.note||'-'}</td><td><button class="btn btn-danger btn-sm" onclick="deletePayment('${p.id}')">🗑</button></td></tr>`;
+      });
+      document.getElementById('paymentsTable').innerHTML = h + '</tbody></table>';
+    }
+    function savePayment(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const list = getPayments(); list.push({ id: DB.genId(), ...data, createdAt: new Date().toISOString() }); DB.set('payments', list);
+      closeModal('paymentModal'); e.target.reset(); showToast('✅ Payment recorded!'); loadPayments();
+    }
+    function deletePayment(id) {
+      if (!confirm('Delete?')) return;
+      DB.set('payments', getPayments().filter(p => p.id !== id)); showToast('🗑 Deleted','info'); loadPayments();
+    }
+
+    // ============== REPORTS ==============
+    function loadReports() {
+      const collections = getCollections(), deliveries = getDeliveries(), payments = getPayments();
+      const monthly = {};
+      collections.forEach(c => { const m = c.date.substring(0,7); if(!monthly[m]) monthly[m]={collected:0,delivered:0,payments:0}; monthly[m].collected += parseFloat(c.quantity)||0; });
+      deliveries.forEach(d => { const m = d.date.substring(0,7); if(!monthly[m]) monthly[m]={collected:0,delivered:0,payments:0}; monthly[m].delivered += parseFloat(d.quantity)||0; });
+      payments.forEach(p => { const m = p.date.substring(0,7); if(!monthly[m]) monthly[m]={collected:0,delivered:0,payments:0}; monthly[m].payments += parseFloat(p.amount)||0; });
+      const data = Object.entries(monthly).sort(([a],[b])=>a.localeCompare(b)).map(([month,d])=>({month, collected:d.collected.toFixed(1), delivered:d.delivered.toFixed(1), payments:d.payments.toFixed(0)}));
+
+      if (!data.length) { document.getElementById('reportsTable').innerHTML = '<div class="empty-state"><p>No data yet</p></div>'; document.getElementById('chartArea').innerHTML = ''; return; }
+
+      let h = '<table><thead><tr><th>Month</th><th>Collected</th><th>Delivered</th><th>Net</th><th>Payments</th></tr></thead><tbody>';
+      data.forEach(r => {
+        h += `<tr><td><strong>${r.month}</strong></td><td>${r.collected}L</td><td>${r.delivered}L</td><td><strong>${(parseFloat(r.collected)-parseFloat(r.delivered)).toFixed(1)}L</strong></td><td>₹${r.payments}</td></tr>`;
+      });
+      document.getElementById('reportsTable').innerHTML = h + '</tbody></table>';
+
+      const maxVal = Math.max(...data.map(d => Math.max(parseFloat(d.collected), parseFloat(d.delivered))), 1);
+      const chartH = 260, groupW = 130, barW = 50;
+      let chtml = '';
+      data.forEach((d,i) => {
+        const x = i*groupW+20;
+        const hC = (parseFloat(d.collected)/maxVal)*chartH;
+        const hD = (parseFloat(d.delivered)/maxVal)*chartH;
+        chtml += `<div class="chart-bar collected" style="left:${x}px;height:${hC}px;width:${barW*0.45}px;" title="Collected: ${d.collected}L"></div><div class="chart-bar delivered" style="left:${x+barW*0.5}px;height:${hD}px;width:${barW*0.45}px;" title="Delivered: ${d.delivered}L"></div><div class="chart-label" style="left:${x-10}px;">${d.month}</div>`;
+      });
+      const ca = document.getElementById('chartArea');
+      ca.innerHTML = chtml;
+      ca.style.width = (data.length*groupW+40)+'px';
+    }
+
+    // ============== EXPORT / IMPORT ==============
+    function exportData() {
+      const data = {
+        suppliers: getSuppliers(), customers: getCustomers(),
+        collections: getCollections(), deliveries: getDeliveries(), payments: getPayments(),
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `milk-data-${new Date().toISOString().split('T')[0]}.json`; a.click();
+      URL.revokeObjectURL(url);
+      showToast('📤 Data exported!');
+    }
+    function importData(e) {
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (data.suppliers) DB.set('suppliers', data.suppliers);
+          if (data.customers) DB.set('customers', data.customers);
+          if (data.collections) DB.set('collections', data.collections);
+          if (data.deliveries) DB.set('deliveries', data.deliveries);
+          if (data.payments) DB.set('payments', data.payments);
+          showToast('📥 Data imported successfully!');
+          showPage('dashboard');
+        } catch(err) { showToast('❌ Invalid file!', 'error'); }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    // ============== INIT ==============
+    (function init() {
+      const now = new Date();
+      document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+      loadDashboard();
+    })();
+  </script>
+</body>
+</html>
