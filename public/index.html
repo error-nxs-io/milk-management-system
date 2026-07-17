@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🥛 Milk Management System</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="logo">🥛</span>
+      <div>
+        <h2>Milk Manager</h2>
+        <small>Dairy Management System</small>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-section">Menu</div>
+      <a class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
+        <span class="icon">📊</span> Dashboard
+      </a>
+      <a class="nav-item" onclick="showPage('suppliers')" data-page="suppliers">
+        <span class="icon">🚜</span> Suppliers (Dealers)
+      </a>
+      <a class="nav-item" onclick="showPage('customers')" data-page="customers">
+        <span class="icon">👥</span> Customers
+      </a>
+      <div class="nav-section">Operations</div>
+      <a class="nav-item" onclick="showPage('collections')" data-page="collections">
+        <span class="icon">📥</span> Milk Collection
+      </a>
+      <a class="nav-item" onclick="showPage('deliveries')" data-page="deliveries">
+        <span class="icon">🚚</span> Milk Delivery
+      </a>
+      <div class="nav-section">Finance</div>
+      <a class="nav-item" onclick="showPage('payments')" data-page="payments">
+        <span class="icon">💰</span> Payments
+      </a>
+      <a class="nav-item" onclick="showPage('reports')" data-page="reports">
+        <span class="icon">📈</span> Reports
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="top-bar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+        <h1 id="pageTitle">Dashboard</h1>
+      </div>
+      <span class="date-display" id="dateDisplay"></span>
+    </div>
+
+    <div class="content-area">
+
+      <!-- ======== DASHBOARD ======== -->
+      <div class="page-section active" id="page-dashboard">
+        <div class="stats-grid" id="dashboardStats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+          <div class="panel">
+            <div class="panel-header"><h2>📥 Today's Collections</h2></div>
+            <div class="panel-body" id="todayCollectionsTable"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h2>🚚 Today's Deliveries</h2></div>
+            <div class="panel-body" id="todayDeliveriesTable"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== SUPPLIERS ======== -->
+      <div class="page-section" id="page-suppliers">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>🚜 All Suppliers / Dealers</h2>
+            <button class="btn btn-primary" onclick="openModal('supplierModal')">+ Add Supplier</button>
+          </div>
+          <div class="panel-body">
+            <div class="table-container" id="suppliersTable"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== CUSTOMERS ======== -->
+      <div class="page-section" id="page-customers">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>👥 All Customers</h2>
+            <button class="btn btn-primary" onclick="openModal('customerModal')">+ Add Customer</button>
+          </div>
+          <div class="panel-body">
+            <div class="table-container" id="customersTable"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== COLLECTIONS ======== -->
+      <div class="page-section" id="page-collections">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>📥 Milk Collection Records</h2>
+            <button class="btn btn-primary" onclick="openModal('collectionModal')">+ Add Collection</button>
+          </div>
+          <div class="panel-body">
+            <div class="filter-bar">
+              <div class="form-group">
+                <label>From Date</label>
+                <input type="date" id="filterColFrom" onchange="loadCollections()">
+              </div>
+              <div class="form-group">
+                <label>To Date</label>
+                <input type="date" id="filterColTo" onchange="loadCollections()">
+              </div>
+              <div class="form-group">
+                <label>Supplier</label>
+                <select id="filterColSupplier" onchange="loadCollections()">
+                  <option value="">All Suppliers</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-container" id="collectionsTable"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== DELIVERIES ======== -->
+      <div class="page-section" id="page-deliveries">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>🚚 Milk Delivery Records</h2>
+            <button class="btn btn-primary" onclick="openModal('deliveryModal')">+ Add Delivery</button>
+          </div>
+          <div class="panel-body">
+            <div class="filter-bar">
+              <div class="form-group">
+                <label>From Date</label>
+                <input type="date" id="filterDelFrom" onchange="loadDeliveries()">
+              </div>
+              <div class="form-group">
+                <label>To Date</label>
+                <input type="date" id="filterDelTo" onchange="loadDeliveries()">
+              </div>
+              <div class="form-group">
+                <label>Customer</label>
+                <select id="filterDelCustomer" onchange="loadDeliveries()">
+                  <option value="">All Customers</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-container" id="deliveriesTable"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== PAYMENTS ======== -->
+      <div class="page-section" id="page-payments">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>💰 Payment Records</h2>
+            <button class="btn btn-primary" onclick="openModal('paymentModal')">+ Add Payment</button>
+          </div>
+          <div class="panel-body">
+            <div class="table-container" id="paymentsTable"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== REPORTS ======== -->
+      <div class="page-section" id="page-reports">
+        <div class="panel">
+          <div class="panel-header"><h2>📈 Monthly Reports</h2></div>
+          <div class="panel-body">
+            <div class="chart-container" id="chartArea"></div>
+            <div class="chart-legend" style="margin-top:16px;">
+              <span><span class="dot" style="background:var(--primary)"></span> Collected (L)</span>
+              <span><span class="dot" style="background:var(--success)"></span> Delivered (L)</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:24px;">
+          <div class="panel-header"><h2>📋 Monthly Summary</h2></div>
+          <div class="panel-body">
+            <div class="table-container" id="reportsTable"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ======== MODALS ======== -->
+
+  <!-- Supplier Modal -->
+  <div class="modal-overlay" id="supplierModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Add Supplier</h2>
+        <button class="modal-close" onclick="closeModal('supplierModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="supplierForm" onsubmit="saveSupplier(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" name="name" required placeholder="e.g. Ramesh Kumar">
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" name="phone" placeholder="e.g. 9876543210">
+            </div>
+            <div class="form-group">
+              <label>Village / Area</label>
+              <input type="text" name="area" placeholder="e.g. Dudu, Jaipur">
+            </div>
+            <div class="form-group">
+              <label>Milk Type</label>
+              <select name="milkType">
+                <option value="cow">Cow (गाय)</option>
+                <option value="buffalo">Buffalo (भैंस)</option>
+                <option value="mixed">Mixed (मिक्स)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Rate per Litre (₹)</label>
+              <input type="number" name="rate" step="0.5" placeholder="e.g. 45">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeModal('supplierModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Supplier</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Modal -->
+  <div class="modal-overlay" id="customerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Add Customer</h2>
+        <button class="modal-close" onclick="closeModal('customerModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="customerForm" onsubmit="saveCustomer(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" name="name" required placeholder="e.g. Suresh Sharma">
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" name="phone" placeholder="e.g. 9876543210">
+            </div>
+            <div class="form-group">
+              <label>Address / Area</label>
+              <input type="text" name="area" placeholder="e.g. Mansarovar, Jaipur">
+            </div>
+            <div class="form-group">
+              <label>Daily Quantity (Litre)</label>
+              <input type="number" name="dailyQty" step="0.5" placeholder="e.g. 2">
+            </div>
+            <div class="form-group">
+              <label>Rate per Litre (₹)</label>
+              <input type="number" name="rate" step="0.5" placeholder="e.g. 55">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeModal('customerModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Customer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collection Modal -->
+  <div class="modal-overlay" id="collectionModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Add Milk Collection</h2>
+        <button class="modal-close" onclick="closeModal('collectionModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="collectionForm" onsubmit="saveCollection(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Supplier *</label>
+              <select name="supplierId" required id="colSupplierSelect">
+                <option value="">-- Select Supplier --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" name="date" required>
+            </div>
+            <div class="form-group">
+              <label>Shift</label>
+              <select name="shift">
+                <option value="morning">Morning (सुबह)</option>
+                <option value="evening">Evening (शाम)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Quantity (Litre) *</label>
+              <input type="number" name="quantity" step="0.1" required placeholder="e.g. 15.5">
+            </div>
+            <div class="form-group">
+              <label>Fat %</label>
+              <input type="number" name="fat" step="0.1" placeholder="e.g. 4.5">
+            </div>
+            <div class="form-group">
+              <label>Rate (₹/Litre)</label>
+              <input type="number" name="rate" step="0.5" placeholder="e.g. 45">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Collection</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delivery Modal -->
+  <div class="modal-overlay" id="deliveryModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Add Milk Delivery</h2>
+        <button class="modal-close" onclick="closeModal('deliveryModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="deliveryForm" onsubmit="saveDelivery(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Customer *</label>
+              <select name="customerId" required id="delCustomerSelect">
+                <option value="">-- Select Customer --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" name="date" required>
+            </div>
+            <div class="form-group">
+              <label>Shift</label>
+              <select name="shift">
+                <option value="morning">Morning (सुबह)</option>
+                <option value="evening">Evening (शाम)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Quantity (Litre) *</label>
+              <input type="number" name="quantity" step="0.1" required placeholder="e.g. 5">
+            </div>
+            <div class="form-group">
+              <label>Rate (₹/Litre)</label>
+              <input type="number" name="rate" step="0.5" placeholder="e.g. 55">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeModal('deliveryModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Delivery</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal-overlay" id="paymentModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Add Payment</h2>
+        <button class="modal-close" onclick="closeModal('paymentModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="paymentForm" onsubmit="savePayment(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Type *</label>
+              <select name="type" required id="payTypeSelect" onchange="updatePayPersonSelect()">
+                <option value="">-- Select --</option>
+                <option value="supplier">Payment to Supplier</option>
+                <option value="customer">Payment from Customer</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Person *</label>
+              <select name="personId" required id="payPersonSelect">
+                <option value="">-- Select Type first --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" name="date" required>
+            </div>
+            <div class="form-group">
+              <label>Amount (₹) *</label>
+              <input type="number" name="amount" step="1" required placeholder="e.g. 5000">
+            </div>
+            <div class="form-group">
+              <label>Payment Mode</label>
+              <select name="mode">
+                <option value="cash">Cash (नकद)</option>
+                <option value="upi">UPI</option>
+                <option value="bank">Bank Transfer</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Note</label>
+              <input type="text" name="note" placeholder="e.g. June month payment">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeModal('paymentModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Payment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
